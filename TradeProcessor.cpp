@@ -2,28 +2,23 @@
 #include <stdlib.h>
 #include <string.h>
 #include <errno.h>
+ 
 
-typedef struct {
-    char SC[256]; // SourceCurrency
-    char DC[256]; // DestibationCurrency
-    float Lots;
-    double Price;
-} TR;
-
-
-char** SplitString(const char* str, char delimiter) {
+ 
+ 
+char** SplitString(const char* input_string, char delimiter) {
     int count = 0;
-    const char* ptr = str;
+    const char* ptr = input_string;
     while (*ptr != '\0') {
         if (*ptr++ == delimiter) {
             count++;
         }
     }
-
+ 
     char** tokens = (char**)malloc(sizeof(char*) * (count + 2));
     int i = 0;
-    ptr = str;
-    char* token = (char*)malloc(strlen(str) + 1);
+    ptr = input_string;
+    char* token = (char*)malloc(strlen(input_string) + 1);
     int j = 0;
     while (*ptr != '\0') {
         if (*ptr == delimiter) {
@@ -41,32 +36,32 @@ char** SplitString(const char* str, char delimiter) {
     free(token);
     return tokens;
 }
-
-
-int intGetFromString(const char* str, int* value) {
+ 
+ 
+int TryConverttoInt(const char* input_string, int* value) {
     char* endptr;
-    *value = strtol(str, &endptr, 10);
-    if (endptr == str) {
+    *value = strtol(input_string, &endptr, 10);
+    if (endptr == input_string) {
         return 0;
     }
     return 1;
 }
-
-int toDouble(const char* str, double* value) {
+ 
+int TryConverttoDouble(const char* input_string, double* value) {
     char* endptr;
-    *value = strtod(str, &endptr);
-    if (endptr == str) {
+    *value = strtod(input_string, &endptr);
+    if (endptr == input_string) {
         return 0;
     }
     return 1;
 }
-
-void Process(FILE* stream) {
+ 
+void ConvertFromCSVToXML(FILE* stream) {
     char line[1024];
-    TR objects[1024];
+    TradeRecords Records[1024];
     int lineCount = 0;
     int objectCount = 0;
-
+ 
     while (fgets(line, sizeof(line), stream)) {
         char* fields[3];
         int fieldCount = 0;
@@ -75,43 +70,43 @@ void Process(FILE* stream) {
             fields[fieldCount++] = token;
             token = strtok(NULL, ",");
         }
-
+ 
         if (fieldCount != 3) {
             fprintf(stderr, "WARN: Line %d malformed. Only %d field(s) found.\n", lineCount + 1, fieldCount);
             continue;
         }
-
+ 
         if (strlen(fields[0]) != 6) {
             fprintf(stderr, "WARN: Trade currencies on line %d malformed: '%s'\n", lineCount + 1, fields[0]);
             continue;
         }
-
-        int tam;
-        if (!intGetFromString(fields[1], &tam)) {
+ 
+        int trade_amount;
+        if (!TryConverttoInt(fields[1], &trade_amount)) {
             fprintf(stderr, "WARN: Trade amount on line %d not a valid integer: '%s'\n", lineCount + 1, fields[1]);
         }
-
-        double tp;
-        if (!toDouble(fields[2], &tp)) {
+ 
+        double trade_price;
+        if (!TryConverttoDouble(fields[2], &trade_price)) {
             fprintf(stderr, "WARN: Trade price on line %d not a valid decimal: '%s'\n", lineCount + 1, fields[2]);
         }
-
-        strncpy(objects[objectCount].SC, fields[0], 3);
-        strncpy(objects[objectCount].DC, fields[0] + 3, 3);
-        objects[objectCount].Lots = tam / LotSize;
-        objects[objectCount].Price = tp;
+ 
+        strncpy(Records[objectCount].SourceCurrency, fields[0], 3);
+        strncpy(Records[objectCount].DestibationCurrency, fields[0] + 3, 3);
+        Records[objectCount].Lots = trade_amount / LotSize;
+        Records[objectCount].Price = trade_price;
         objectCount++;
         lineCount++;
     }
-
+ 
     FILE* outFile = fopen("output.xml", "w");
     fprintf(outFile, "<TradeRecords>\n");
     for (int i = 0; i < objectCount; i++) {
         fprintf(outFile, "\t<TradeRecord>\n");
-        fprintf(outFile, "\t\t<SourceCurrency>%s</SourceCurrency>\n", objects[i].SC);
-        fprintf(outFile, "\t\t<DestinationCurrency>%s</DestinationCurrency>\n", objects[i].DC);
-        fprintf(outFile, "\t\t<Lots>%d</Lots>\n", objects[i].Lots);
-        fprintf(outFile, "\t\t<Price>%f</Price>\n", objects[i].Price);
+        fprintf(outFile, "\t\t<SourceCurrency>%s</SourceCurrency>\n", Records[i].SourceCurrency);
+        fprintf(outFile, "\t\t<DestinationCurrency>%s</DestinationCurrency>\n", Records[i].DestibationCurrency);
+        fprintf(outFile, "\t\t<Lots>%d</Lots>\n", Records[i].Lots);
+        fprintf(outFile, "\t\t<Price>%f</Price>\n", Records[i].Price);
         fprintf(outFile, "\t</TradeRecord>\n");
     }
     fprintf(outFile, "</TradeRecords>");
@@ -119,3 +114,14 @@ void Process(FILE* stream) {
     printf("INFO: %d trades processed\n", objectCount);
 }
 
+
+int main() {
+    std::ifstream inputFile("trades.txt");
+    if (!inputFile) {
+        std::cerr << "Error opening file\n";
+        return 1;
+    }
+    Process(inputFile);
+    return 0;
+}
+}
