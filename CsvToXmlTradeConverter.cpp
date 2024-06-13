@@ -40,7 +40,7 @@ void ConvertFromCSVToXML(FILE* stream) {
         }
  
         strncpy(Records[objectCount].SourceCurrency, fields[0], 3);
-        strncpy(Records[objectCount].DestibationCurrency, fields[0] + 3, 3);
+        strncpy(Records[objectCount].DestinationCurrency, fields[0] + 3, 3);
         Records[objectCount].Lots = trade_amount / LotSize;
         Records[objectCount].Price = trade_price;
         objectCount++;
@@ -52,7 +52,7 @@ void ConvertFromCSVToXML(FILE* stream) {
     for (int i = 0; i < objectCount; i++) {
         fprintf(outFile, "\t<TradeRecord>\n");
         fprintf(outFile, "\t\t<SourceCurrency>%s</SourceCurrency>\n", Records[i].SourceCurrency);
-        fprintf(outFile, "\t\t<DestinationCurrency>%s</DestinationCurrency>\n", Records[i].DestibationCurrency);
+        fprintf(outFile, "\t\t<DestinationCurrency>%s</DestinationCurrency>\n", Records[i].DestinationCurrency);
         fprintf(outFile, "\t\t<Lots>%d</Lots>\n", Records[i].Lots);
         fprintf(outFile, "\t\t<Price>%f</Price>\n", Records[i].Price);
         fprintf(outFile, "\t</TradeRecord>\n");
