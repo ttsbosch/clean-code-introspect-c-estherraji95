@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <errno.h>
- 
+#include<CsvToXmlTradeConverter.h>
 void ConvertFromCSVToXML(FILE* stream) {
     char line[1024];
     TradeRecords Records[1024];
