@@ -3,6 +3,7 @@
 #include <string.h>
 #include <errno.h>
 #include<CsvToXmlTradeConverter.h>
+
 void ConvertFromCSVToXML(FILE* stream) {
     char line[1024];
     TradeRecords Records[1024];
@@ -68,7 +69,7 @@ int main() {
         std::cerr << "Error opening file\n";
         return 1;
     }
-    Process(inputFile);
+    ConvertFromCSVToXML(inputFile);
     return 0;
 }
 }
