@@ -3,6 +3,10 @@
 #include <string.h>
 #include <errno.h>
 #include<CsvToXmlTradeConverter.h>
+#include<Converters.h>
+#include<TradeRecord.h>
+
+#define LOTSIZE 100
 void readTradeDataFromCSV()
 {
     while (fgets(line, sizeof(line), stream)) {
@@ -51,7 +55,7 @@ void ValidateTradedata()
 Void ExtractFields(){
         strncpy(Records[objectCount].SourceCurrency, fields[0], 3);
         strncpy(Records[objectCount].DestinationCurrency, fields[0] + 3, 3);
-        Records[objectCount].Lots = trade_amount / LotSize;
+        Records[objectCount].Lots = trade_amount / LOTSIZE;
         Records[objectCount].Price = trade_price;
         objectCount++;
         lineCount++;
