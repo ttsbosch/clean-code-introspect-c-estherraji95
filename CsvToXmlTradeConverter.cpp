@@ -2,9 +2,9 @@
 #include <stdlib.h>
 #include <string.h>
 #include <errno.h>
-#include<CsvToXmlTradeConverter.h>
-#include<Converters.h>
-#include<TradeRecord.h>
+#include <CsvToXmlTradeConverter.h>
+#include <Converters.h>
+#include <TradeRecord.h>
 
 #define LOTSIZE 100
 void readTradeDataFromCSV()
