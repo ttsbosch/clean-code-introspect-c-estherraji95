@@ -142,9 +142,9 @@ void ConvertDatafromCsvtoXML(FILE *stream) {
 }
 
 int main() {
-    FILE *csvFile = fopen("trades.txt", "r");
+    FILE *csvFile = fopen("../trades.txt", "r");
     if (!csvFile) {
-        fprintf(stderr, "Could not open trade_data.csv: %s\n", strerror(errno));
+        fprintf(stderr, "Could not open trades.txt: %s\n", strerror(errno));
         return 1;
     }
 
