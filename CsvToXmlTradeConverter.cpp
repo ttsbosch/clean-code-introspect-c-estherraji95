@@ -3,7 +3,7 @@
 #include <string.h>
 #include <errno.h>
 #include "TradeRecord.h"
-#include "StringConverter.h"
+#include "StringProcessor.h"
 
 #define MAX_TRADE_RECORDS 1024
 #define MAX_LINE_LENGTH 1024
