@@ -16,6 +16,65 @@ typedef struct {
     double tradePrice;
 } Trade_Record;
 
+void HandleMemoryAllocationFailure() {
+    fprintf(stderr, "Memory allocation failed.\n");
+}
+
+char** AllocateInitialMemory() {
+    char** lines = (char**)malloc(INITIAL_CAPACITY * sizeof(char*));
+    if (!lines) {
+        HandleMemoryAllocationFailure();
+    }
+    return lines;
+}
+
+char** ReallocateMemory(char** lines, int* capacity) {
+    *capacity *= 2;
+    lines = (char**)realloc(lines, (*capacity) * sizeof(char*));
+    if (!lines) {
+        HandleMemoryAllocationFailure();
+    }
+    return lines;
+}
+
+char* CopyLine(const char* line) {
+    char* copiedLine = (char*)malloc((strlen(line) + 1) * sizeof(char));
+    if (copiedLine) {
+        strcpy(copiedLine, line);
+    }
+    return copiedLine;
+}
+
+void ReadLinesFromStream(FILE* stream, char** lines, int* count, int* capacity) {
+    char line[MAX_LINE_LENGTH];
+    while (fgets(line, sizeof(line), stream)) {
+        if (*count >= *capacity) {
+            lines = ReallocateMemory(lines, capacity);
+            if (!lines) return;
+        }
+        lines[*count] = CopyLine(line);
+        if (!lines[*count]) {
+            HandleMemoryAllocationFailure();
+            return;
+        }
+        (*count)++;
+    }
+}
+
+char** ReadTradeDataFromCsv(FILE* stream, int* numLines) {
+    int capacity = INITIAL_CAPACITY;
+    int count = 0;
+    char** lines = AllocateInitialMemory();
+    if (!lines) {
+        return NULL;
+    }
+
+    ReadLinesFromStream(stream, lines, &count, &capacity);
+
+    *numLines = count;
+    return lines;
+}
+
 char **ReadTradeDataFromCsv(FILE *stream, int *numLines) {
     char **lines = NULL;
     char line[MAX_LINE_LENGTH];
