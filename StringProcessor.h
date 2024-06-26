@@ -1,4 +1,7 @@
-char** SplitString(const char* input_string, char delimiter) {
+#include <stdlib.h>
+#include <string.h>
+
+int CountDelimiters(const char* input_string, char delimiter) {
     int count = 0;
     const char* ptr = input_string;
     while (*ptr != '\0') {
@@ -6,25 +9,43 @@ char** SplitString(const char* input_string, char delimiter) {
             count++;
         }
     }
- 
-    char** tokens = (char**)malloc(sizeof(char*) * (count + 2));
+    return count;
+}
+
+char** AllocateTokens(int count) {
+    return (char**)malloc(sizeof(char*) * (count + 2));
+}
+
+void CopyToken(char* destination, const char* source, int length) {
+    strncpy(destination, source, length);
+    destination[length] = '\0';
+}
+
+char** SplitString(const char* input_string, char delimiter) {
+    int delimiter_count = CountDelimiters(input_string, delimiter);
+    char** tokens = AllocateTokens(delimiter_count);
+    
+    const char* ptr = input_string;
     int i = 0;
-    ptr = input_string;
-    char* token = (char*)malloc(strlen(input_string) + 1);
-    int j = 0;
+    const char* start = ptr;
+    
     while (*ptr != '\0') {
         if (*ptr == delimiter) {
-            token[j] = '\0';
-            tokens[i++] = strdup(token);
-            j = 0;
-        } else {
-            token[j++] = *ptr;
+            int token_length = ptr - start;
+            char* token = (char*)malloc(token_length + 1);
+            CopyToken(token, start, token_length);
+            tokens[i++] = token;
+            start = ptr + 1;
         }
         ptr++;
     }
-    token[j] = '\0';
-    tokens[i++] = strdup(token);
+    
+    // Handle the last token
+    int token_length = ptr - start;
+    char* token = (char*)malloc(token_length + 1);
+    CopyToken(token, start, token_length);
+    tokens[i++] = token;
     tokens[i] = NULL;
-    free(token);
+    
     return tokens;
 }
