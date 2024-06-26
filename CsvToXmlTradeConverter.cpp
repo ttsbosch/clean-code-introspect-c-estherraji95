@@ -105,34 +105,55 @@ char **ReadTradeDataFromCsv(FILE *stream, int *numLines) {
     return lines;
 }
 
-Trade_Record* mapCsvLineDataToTradeData(char **lineInFile, int numLines) {
-    Trade_Record *tradeData;
-    tradeData = (Trade_Record *)malloc(numLines * sizeof(Trade_Record));
+Trade_Record* AllocateTradeData(int numLines) {
+    Trade_Record* tradeData = (Trade_Record*)malloc(numLines * sizeof(Trade_Record));
     if (!tradeData) {
-        fprintf(stderr, "Memory allocation failed for trade data.\n");
+        HandleTradeDataMemoryAllocationFailure();
+    }
+    return tradeData;
+}
+
+int ParseCsvLine(char* line, char* fields[], int maxFields) {
+    int fieldCount = 0;
+    char* token = strtok(line, ",");
+    while (token != NULL && fieldCount < maxFields) {
+        fields[fieldCount++] = token;
+        token = strtok(NULL, ",");
+    }
+    return fieldCount;
+}
+
+void ParseCurrencies(const char* field, char* sourceCurrency, char* destinationCurrency) {
+    strncpy(sourceCurrency, field, MAX_CURRENCY_LENGTH);
+    sourceCurrency[MAX_CURRENCY_LENGTH] = '\0';
+    strncpy(destinationCurrency, field + MAX_CURRENCY_LENGTH, MAX_CURRENCY_LENGTH);
+    destinationCurrency[MAX_CURRENCY_LENGTH] = '\0';
+}
+
+void MapFieldsToTradeRecord(Trade_Record* record, char* fields[]) {
+    ParseCurrencies(fields[0], record->Source_Currency, record->Destination_Currency);
+    record->tradeAmount = atoi(fields[1]);
+    record->tradePrice = atof(fields[2]);
+}
+
+void HandleInvalidCsvFormat(int lineIndex) {
+    fprintf(stderr, "Invalid CSV format on line %d\n", lineIndex + 1);
+}
+
+Trade_Record* mapCsvLineDataToTradeData(char** lineInFile, int numLines) {
+    Trade_Record* tradeData = AllocateTradeData(numLines);
+    if (!tradeData) {
         return NULL;
     }
 
-    char *fields[3];
-    int fieldCount;
+    char* fields[3];
     for (int index = 0; index < numLines; index++) {
-        fieldCount = 0;
-        char *token = strtok(lineInFile[index], ",");
-        while (token != NULL && fieldCount < 3) {
-            fields[fieldCount++] = token;
-            token = strtok(NULL, ",");
-        }
+        int fieldCount = ParseCsvLine(lineInFile[index], fields, 3);
         if (fieldCount != 3) {
-            fprintf(stderr, "Invalid CSV format on line %d\n", index + 1);
+            HandleInvalidCsvFormat(index);
             continue;
         }
-
-        strncpy(tradeData[index].Source_Currency, fields[0], 3);
-        tradeData[index].Source_Currency[3] = '\0';
-        strncpy(tradeData[index].Destination_Currency, fields[0] + 3, 3);
-        tradeData[index].Destination_Currency[3] = '\0';
-        tradeData[index].tradeAmount = atoi(fields[1]);
-        tradeData[index].tradePrice = atof(fields[2]);
+        MapFieldsToTradeRecord(&tradeData[index], fields);
     }
 
     return tradeData;
