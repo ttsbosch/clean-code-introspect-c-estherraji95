@@ -44,23 +44,35 @@ char* CopyLine(const char* line) {
     return copiedLine;
 }
 
-void AddLineToBuffer(char*** lines, int* count, int* capacity, const char* line) {
+int CheckAndReallocateBuffer(char*** lines, int* count, int* capacity) {
     if (*count >= *capacity) {
         *lines = ReallocateMemory(*lines, capacity);
-        if (!*lines) return;
+        if (!*lines) {
+            return 0;
+        }
+    }
+    return 1;
+}
+
+int AddLineToBuffer(char*** lines, int* count, int* capacity, const char* line) {
+    if (!CheckAndReallocateBuffer(lines, count, capacity)) {
+        return 0;
     }
     (*lines)[*count] = CopyLine(line);
     if (!(*lines)[*count]) {
         HandleMemoryAllocationFailure();
-        return;
+        return 0;
     }
     (*count)++;
+    return 1;
 }
 
 void ReadLinesFromStream(FILE* stream, char*** lines, int* count, int* capacity) {
     char line[MAX_LINE_LENGTH];
     while (fgets(line, sizeof(line), stream)) {
-        AddLineToBuffer(lines, count, capacity, line);
+        if (!AddLineToBuffer(lines, count, capacity, line)) {
+            return;
+        }
     }
 }
 
