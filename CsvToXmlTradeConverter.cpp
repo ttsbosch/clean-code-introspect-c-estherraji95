@@ -6,10 +6,11 @@
 #define MAX_TRADE_RECORDS 1024
 #define MAX_LINE_LENGTH 1024
 #define INITIAL_CAPACITY 10
+#define MAX_CURRENCY_LENGTH 3
 
 typedef struct {
-    char Source_Currency[4];
-    char Destination_Currency[4];
+    char Source_Currency[MAX_CURRENCY_LENGTH + 1];
+    char Destination_Currency[MAX_CURRENCY_LENGTH + 1];
     int tradeAmount;
     double tradePrice;
 } Trade_Record;
@@ -132,7 +133,7 @@ Trade_Record* mapCsvLineDataToTradeData(char** lineInFile, int numLines) {
 }
 
 void ValidateCurrency(const char* currency, const char* fieldName, int lineIndex) {
-    if (strlen(currency) != 3) {
+    if (strlen(currency) != MAX_CURRENCY_LENGTH) {
         fprintf(stderr, "WARN: %s currency on line %d malformed.\n", fieldName, lineIndex + 1);
     }
 }
