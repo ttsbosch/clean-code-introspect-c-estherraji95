@@ -16,6 +16,7 @@ protected:
         // Clean up resources if needed
     }
 };
+
 TEST_F(CsvToXmlTradeConverterTest, HandleMemoryAllocationFailure) {
     testing::internal::CaptureStderr();
     HandleMemoryAllocationFailure();
