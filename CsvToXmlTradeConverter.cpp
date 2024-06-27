@@ -44,19 +44,23 @@ char* CopyLine(const char* line) {
     return copiedLine;
 }
 
+void AddLineToBuffer(char*** lines, int* count, int* capacity, const char* line) {
+    if (*count >= *capacity) {
+        *lines = ReallocateMemory(*lines, capacity);
+        if (!*lines) return;
+    }
+    (*lines)[*count] = CopyLine(line);
+    if (!(*lines)[*count]) {
+        HandleMemoryAllocationFailure();
+        return;
+    }
+    (*count)++;
+}
+
 void ReadLinesFromStream(FILE* stream, char*** lines, int* count, int* capacity) {
     char line[MAX_LINE_LENGTH];
     while (fgets(line, sizeof(line), stream)) {
-        if (*count >= *capacity) {
-            *lines = ReallocateMemory(*lines, capacity);
-            if (!*lines) return;
-        }
-        (*lines)[*count] = CopyLine(line);
-        if (!(*lines)[*count]) {
-            HandleMemoryAllocationFailure();
-            return;
-        }
-        (*count)++;
+        AddLineToBuffer(lines, count, capacity, line);
     }
 }
 
@@ -113,20 +117,24 @@ void HandleInvalidCsvFormat(int lineIndex) {
     fprintf(stderr, "Invalid CSV format on line %d\n", lineIndex + 1);
 }
 
+void MapLineToTradeData(Trade_Record* tradeData, char* line, int index) {
+    char* fields[3];
+    int fieldCount = ParseCsvLine(line, fields, 3);
+    if (fieldCount != 3) {
+        HandleInvalidCsvFormat(index);
+        return;
+    }
+    MapFieldsToTradeRecord(&tradeData[index], fields);
+}
+
 Trade_Record* mapCsvLineDataToTradeData(char** lineInFile, int numLines) {
     Trade_Record* tradeData = AllocateTradeData(numLines);
     if (!tradeData) {
         return NULL;
     }
 
-    char* fields[3];
     for (int index = 0; index < numLines; index++) {
-        int fieldCount = ParseCsvLine(lineInFile[index], fields, 3);
-        if (fieldCount != 3) {
-            HandleInvalidCsvFormat(index);
-            continue;
-        }
-        MapFieldsToTradeRecord(&tradeData[index], fields);
+        MapLineToTradeData(tradeData, lineInFile[index], index);
     }
 
     return tradeData;
