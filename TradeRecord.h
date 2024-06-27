@@ -3,5 +3,5 @@ typedef struct {
     char Destination_Currency[256];
     float Lots;
     double tradePrice;
-    double tradeAmount;
+    int tradeAmount;
 } TradeRecord;
