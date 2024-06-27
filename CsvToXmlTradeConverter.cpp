@@ -2,6 +2,9 @@
 #include <stdlib.h>
 #include <string.h>
 #include <errno.h>
+#include "TradeRecord.h"
+#include "StringProcessor.h"
+#include "CsvToXmlTradeConverter.h"
 
 int main() {
     FILE* csvFile = fopen("../trades.txt", "r");
