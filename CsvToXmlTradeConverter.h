@@ -1,6 +1,11 @@
 #include "TradeRecord.h"
 #include "Converters.h"
 
+#define MAX_TRADE_RECORDS 1024
+#define MAX_LINE_LENGTH 1024
+#define INITIAL_CAPACITY 10
+#define MAX_CURRENCY_LENGTH 3
+
 void HandleMemoryAllocationFailure() {
     fprintf(stderr, "Memory allocation failed.\n");
 }
@@ -217,4 +222,3 @@ void ConvertDatafromCsvtoXML(FILE* stream) {
     FreeLines(lines, numLines);
     free(records);
 }
-
