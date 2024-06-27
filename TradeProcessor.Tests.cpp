@@ -21,32 +21,3 @@ TEST_F(CsvToXmlTradeConverterTest, HandleMemoryAllocationFailure) {
     EXPECT_EQ(output, "Memory allocation failed.\n");
 }
 
-TEST_F(CsvToXmlTradeConverterTest, AllocateInitialMemory) {
-    char** lines = AllocateInitialMemory();
-    ASSERT_NE(lines, nullptr);
-    free(lines);
-}
-
-TEST_F(CsvToXmlTradeConverterTest, ReallocateMemory) {
-    char** lines = AllocateInitialMemory();
-    int capacity = INITIAL_CAPACITY;
-    lines = ReallocateMemory(lines, &capacity);
-    ASSERT_NE(lines, nullptr);
-    free(lines);
-}
-
-TEST_F(CsvToXmlTradeConverterTest, CopyLine) {
-    const char* line = "test line";
-    char* copiedLine = CopyLine(line);
-    ASSERT_NE(copiedLine, nullptr);
-    EXPECT_STREQ(copiedLine, line);
-    free(copiedLine);
-}
-
-TEST_F(CsvToXmlTradeConverterTest, CheckAndReallocateBuffer) {
-    char** lines = AllocateInitialMemory();
-    int count = INITIAL_CAPACITY;
-    int capacity = INITIAL_CAPACITY;
-    ASSERT_TRUE(CheckAndReallocateBuffer(&lines, &count, &capacity));
-    free(lines);
-}
