@@ -2,8 +2,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <errno.h>
-#include "TradeRecord.h"
-#include "StringProcessor.h"
 
 #define MAX_TRADE_RECORDS 1024
 #define MAX_LINE_LENGTH 1024
@@ -45,15 +43,15 @@ char* CopyLine(const char* line) {
     return copiedLine;
 }
 
-void ReadLinesFromStream(FILE* stream, char** lines, int* count, int* capacity) {
+void ReadLinesFromStream(FILE* stream, char*** lines, int* count, int* capacity) {
     char line[MAX_LINE_LENGTH];
     while (fgets(line, sizeof(line), stream)) {
         if (*count >= *capacity) {
-            lines = ReallocateMemory(lines, capacity);
-            if (!lines) return;
+            *lines = ReallocateMemory(*lines, capacity);
+            if (!*lines) return;
         }
-        lines[*count] = CopyLine(line);
-        if (!lines[*count]) {
+        (*lines)[*count] = CopyLine(line);
+        if (!(*lines)[*count]) {
             HandleMemoryAllocationFailure();
             return;
         }
@@ -69,40 +67,14 @@ char** ReadTradeDataFromCsv(FILE* stream, int* numLines) {
         return NULL;
     }
 
-    ReadLinesFromStream(stream, lines, &count, &capacity);
+    ReadLinesFromStream(stream, &lines, &count, &capacity);
 
     *numLines = count;
     return lines;
 }
 
-char **ReadTradeDataFromCsv(FILE *stream, int *numLines) {
-    char **lines = NULL;
-    char line[MAX_LINE_LENGTH];
-    int capacity = INITIAL_CAPACITY;
-    int count = 0;
-
-    lines = (char **)malloc(capacity * sizeof(char *));
-    if (!lines) {
-        fprintf(stderr, "Memory allocation failed.\n");
-        return NULL;
-    }
-
-    while (fgets(line, sizeof(line), stream)) {
-        if (count >= capacity) {
-            capacity *= 2;
-            lines = (char **)realloc(lines, capacity * sizeof(char *));
-            if (!lines) {
-                fprintf(stderr, "Memory reallocation failed.\n");
-                return NULL;
-            }
-        }
-        lines[count] = (char *)malloc((strlen(line) + 1) * sizeof(char));
-        strcpy(lines[count], line);
-        count++;
-    }
-
-    *numLines = count;
-    return lines;
+void HandleTradeDataMemoryAllocationFailure() {
+    fprintf(stderr, "Memory allocation failed for trade data.\n");
 }
 
 Trade_Record* AllocateTradeData(int numLines) {
@@ -159,22 +131,39 @@ Trade_Record* mapCsvLineDataToTradeData(char** lineInFile, int numLines) {
     return tradeData;
 }
 
-void validateTradeData(Trade_Record *records, int numLines) {
-    for (int i = 0; i < numLines; i++) {
-        if (strlen(records[i].Source_Currency) != 3 || strlen(records[i].Destination_Currency) != 3) {
-            fprintf(stderr, "WARN: Trade currencies on line %d malformed.\n", i + 1);
-        }
-        if (records[i].tradeAmount <= 0) {
-            fprintf(stderr, "WARN: Trade amount on line %d not a valid integer.\n", i + 1);
-        }
-        if (records[i].tradePrice <= 0) {
-            fprintf(stderr, "WARN: Trade price on line %d not a valid decimal.\n", i + 1);
-        }
+void ValidateCurrency(const char* currency, const char* fieldName, int lineIndex) {
+    if (strlen(currency) != 3) {
+        fprintf(stderr, "WARN: %s currency on line %d malformed.\n", fieldName, lineIndex + 1);
     }
 }
 
-void WriteXML(Trade_Record *records, int numLines) {
-    FILE *outFile = fopen("output.xml", "w");
+void ValidateTradeAmount(int tradeAmount, int lineIndex) {
+    if (tradeAmount <= 0) {
+        fprintf(stderr, "WARN: Trade amount on line %d not a valid integer.\n", lineIndex + 1);
+    }
+}
+
+void ValidateTradePrice(double tradePrice, int lineIndex) {
+    if (tradePrice <= 0) {
+        fprintf(stderr, "WARN: Trade price on line %d not a valid decimal.\n", lineIndex + 1);
+    }
+}
+
+void ValidateTradeRecord(Trade_Record* record, int lineIndex) {
+    ValidateCurrency(record->Source_Currency, "Source", lineIndex);
+    ValidateCurrency(record->Destination_Currency, "Destination", lineIndex);
+    ValidateTradeAmount(record->tradeAmount, lineIndex);
+    ValidateTradePrice(record->tradePrice, lineIndex);
+}
+
+void validateTradeData(Trade_Record* records, int numLines) {
+    for (int i = 0; i < numLines; i++) {
+        ValidateTradeRecord(&records[i], i);
+    }
+}
+
+void WriteXML(Trade_Record* records, int numLines) {
+    FILE* outFile = fopen("output.xml", "w");
     if (!outFile) {
         fprintf(stderr, "Could not open output.xml for writing.\n");
         return;
@@ -189,40 +178,41 @@ void WriteXML(Trade_Record *records, int numLines) {
         fprintf(outFile, "\t\t<Price>%f</Price>\n", records[i].tradePrice);
         fprintf(outFile, "\t</TradeRecord>\n");
     }
-    fprintf(outFile, "</TradeRecords>");
+    fprintf(outFile, "</TradeRecords>\n");
     fclose(outFile);
 }
 
-void ConvertDatafromCsvtoXML(FILE *stream) {
+void FreeLines(char** lines, int numLines) {
+    for (int i = 0; i < numLines; i++) {
+        free(lines[i]);
+    }
+    free(lines);
+}
+
+void ConvertDatafromCsvtoXML(FILE* stream) {
     int numLines;
-    char **lines = ReadTradeDataFromCsv(stream, &numLines);
+    char** lines = ReadTradeDataFromCsv(stream, &numLines);
     if (!lines) {
         fprintf(stderr, "Failed to read CSV data.\n");
         return;
     }
 
-    Trade_Record *records = mapCsvLineDataToTradeData(lines, numLines);
+    Trade_Record* records = mapCsvLineDataToTradeData(lines, numLines);
     if (!records) {
         fprintf(stderr, "Failed to map CSV data to trade data.\n");
-        for (int i = 0; i < numLines; i++) {
-            free(lines[i]);
-        }
-        free(lines);
+        FreeLines(lines, numLines);
         return;
     }
 
     validateTradeData(records, numLines);
     WriteXML(records, numLines);
 
-    for (int i = 0; i < numLines; i++) {
-        free(lines[i]);
-    }
-    free(lines);
+    FreeLines(lines, numLines);
     free(records);
 }
 
 int main() {
-    FILE *csvFile = fopen("../trades.txt", "r");
+    FILE* csvFile = fopen("../trades.txt", "r");
     if (!csvFile) {
         fprintf(stderr, "Could not open trades.txt: %s\n", strerror(errno));
         return 1;
