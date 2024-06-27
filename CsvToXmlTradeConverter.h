@@ -85,8 +85,8 @@ void HandleTradeDataMemoryAllocationFailure() {
     fprintf(stderr, "Memory allocation failed for trade data.\n");
 }
 
-Trade_Record* AllocateTradeData(int numLines) {
-    Trade_Record* tradeData = (Trade_Record*)malloc(numLines * sizeof(Trade_Record));
+TradeRecord* AllocateTradeData(int numLines) {
+    TradeRecord* tradeData = (TradeRecord*)malloc(numLines * sizeof(TradeRecord));
     if (!tradeData) {
         HandleTradeDataMemoryAllocationFailure();
     }
@@ -110,7 +110,7 @@ void ParseCurrencies(const char* field, char* sourceCurrency, char* destinationC
     destinationCurrency[MAX_CURRENCY_LENGTH] = '\0';
 }
 
-void MapFieldsToTradeRecord(Trade_Record* record, char* fields[]) {
+void MapFieldsToTradeRecord(TradeRecord* record, char* fields[]) {
     ParseCurrencies(fields[0], record->Source_Currency, record->Destination_Currency);
     record->tradeAmount = atoi(fields[1]);
     record->tradePrice = atof(fields[2]);
@@ -120,7 +120,7 @@ void HandleInvalidCsvFormat(int lineIndex) {
     fprintf(stderr, "Invalid CSV format on line %d\n", lineIndex + 1);
 }
 
-void MapLineToTradeData(Trade_Record* tradeData, char* line, int index) {
+void MapLineToTradeData(TradeRecord* tradeData, char* line, int index) {
     char* fields[3];
     int fieldCount = ParseCsvLine(line, fields, 3);
     if (fieldCount != 3) {
@@ -130,8 +130,8 @@ void MapLineToTradeData(Trade_Record* tradeData, char* line, int index) {
     MapFieldsToTradeRecord(&tradeData[index], fields);
 }
 
-Trade_Record* mapCsvLineDataToTradeData(char** lineInFile, int numLines) {
-    Trade_Record* tradeData = AllocateTradeData(numLines);
+TradeRecord* mapCsvLineDataToTradeData(char** lineInFile, int numLines) {
+    TradeRecord* tradeData = AllocateTradeData(numLines);
     if (!tradeData) {
         return NULL;
     }
@@ -161,20 +161,20 @@ void ValidateTradePrice(double tradePrice, int lineIndex) {
     }
 }
 
-void ValidateTradeRecord(Trade_Record* record, int lineIndex) {
+void ValidateTradeRecord(TradeRecord* record, int lineIndex) {
     ValidateCurrency(record->Source_Currency, "Source", lineIndex);
     ValidateCurrency(record->Destination_Currency, "Destination", lineIndex);
     ValidateTradeAmount(record->tradeAmount, lineIndex);
     ValidateTradePrice(record->tradePrice, lineIndex);
 }
 
-void validateTradeData(Trade_Record* records, int numLines) {
+void validateTradeData(TradeRecord* records, int numLines) {
     for (int i = 0; i < numLines; i++) {
         ValidateTradeRecord(&records[i], i);
     }
 }
 
-void WriteXML(Trade_Record* records, int numLines) {
+void WriteXML(TradeRecord* records, int numLines) {
     FILE* outFile = fopen("output.xml", "w");
     if (!outFile) {
         fprintf(stderr, "Could not open output.xml for writing.\n");
@@ -209,7 +209,7 @@ void ConvertDatafromCsvtoXML(FILE* stream) {
         return;
     }
 
-    Trade_Record* records = mapCsvLineDataToTradeData(lines, numLines);
+    TradeRecord* records = mapCsvLineDataToTradeData(lines, numLines);
     if (!records) {
         fprintf(stderr, "Failed to map CSV data to trade data.\n");
         FreeLines(lines, numLines);
