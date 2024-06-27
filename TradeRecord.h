@@ -3,4 +3,4 @@ typedef struct {
     char DestinationCurrency[256];
     float Lots;
     double Price;
-} TradeRecords;
+} TradeRecord;
