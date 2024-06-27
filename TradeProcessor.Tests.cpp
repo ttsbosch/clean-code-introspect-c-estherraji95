@@ -3,11 +3,9 @@
 #include <cstring>
 #include "CsvToXmlTradeConverter.h"
 
-// Test cases...
-
 TEST_F(CsvToXmlTradeConverterTest, HandleMemoryAllocationFailure) {
     testing::internal::CaptureStderr();
     HandleMemoryAllocationFailure();
     std::string output = testing::internal::GetCapturedStderr();
-    EXPECT_EQ(output, "Memory allocation failed.\n
-
+    EXPECT_EQ(output, "Memory allocation failed.\n");
+}
